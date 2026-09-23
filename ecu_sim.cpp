@@ -47,12 +47,12 @@ uint8_t ecu_simClass::init(uint32_t baud) {
 void ecu_simClass::update_pots(void) 
 {
   uint16_t temp;
-  ecu.engine_rpm = 0xffff - map(analogRead(AN1), 0, 1023, 0, 0xffff);
+  /*ecu.engine_rpm = 0xffff - map(analogRead(AN1), 0, 1023, 0, 0xffff);
   ecu.vehicle_speed = 0xff - map(analogRead(AN3), 0, 1023, 0, 0xff);
   ecu.coolant_temp =  0xff - map(analogRead(AN2), 0, 1023, 0, 0xff);
   ecu.maf_airflow = 0xffff - map(analogRead(AN4), 0, 1023, 0, 0xffff);
   ecu.throttle_position = 0xff - map(analogRead(AN5), 0, 1023, 0, 0xff);
-  ecu.o2_voltage = 0xffff - map(analogRead(AN6), 0, 1023, 0, 0xffff);
+  ecu.o2_voltage = 0xffff - map(analogRead(AN6), 0, 1023, 0, 0xffff);*/
  
   if (pushbuttonSW1.update()) 
   {
