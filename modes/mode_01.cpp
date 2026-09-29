@@ -133,7 +133,7 @@ bool handle_mode_01(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
                 // Bitmask showing supported PIDs 01-20
                 // 0xBF = 01,03-09 | 0xBE = 0B-10 | 0xB8 = 11,13-15 | 0x93 = 19,1C,1F + PID 20 supported
                 can_MsgTx.buf[3] = 0xBF;  // PIDs 01,03,04,05,06,07,08,09
-                can_MsgTx.buf[4] = 0xBF //0xBE;  // PIDs 0B,0C,0D,0E,0F,10
+                can_MsgTx.buf[4] = 0xBF; //0xBE;  // PIDs 0B,0C,0D,0E,0F,10
                 can_MsgTx.buf[5] = 0xB8;  // PIDs 11,13,14,15 (added PID 14 support)
                 can_MsgTx.buf[6] = 0x93;  // PIDs 19,1C,1F, PID 20
                 can1.write(can_MsgTx);
