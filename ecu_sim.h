@@ -24,6 +24,12 @@
  *   STATUS: IMPLEMENTED
  *   PURPOSE: Clear DTCs, freeze frames, test data, reset monitors, turn off MIL.
  *   NOTE: Comprehensive reset of all emissions diagnostic data.
+ *
+ * Mode 07 (0x07) - Request Pending Emissions DTCs
+ *   STATUS: IMPLEMENTED
+ *
+ * Mode 0A (0x0A) - Request Permanent Emissions DTCs
+ *   STATUS: IMPLEMENTED
 
  * Mode 09 (0x09) - Request Vehicle Information
  *   STATUS: FULLY IMPLEMENTED
@@ -36,6 +42,8 @@
 #define MODE2               0x02        // Freeze frame (emissions data when DTC set)
 #define MODE3               0x03        // Emissions-related DTCs ("P" codes)
 #define MODE4               0x04        // Clear emissions diagnostic information
+#define MODE7               0x07        // Pending emissions DTCs
+#define MODEA               0x0A        // Permanent emissions DTCs
 #define MODE9               0x09        // Vehicle information (VIN, calibrations)
 
 /*
@@ -101,6 +109,8 @@
 #define MODE2_RESPONSE      0x42
 #define MODE3_RESPONSE      0x43
 #define MODE4_RESPONSE      0x44
+#define MODE7_RESPONSE      0x47
+#define MODEA_RESPONSE      0x4A
 #define MODE9_RESPONSE      0x49
 
 /*

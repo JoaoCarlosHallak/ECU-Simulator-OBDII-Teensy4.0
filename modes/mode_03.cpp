@@ -52,6 +52,12 @@ bool handle_mode_03(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
         return false;  // Not our mode, let other handlers try
     }
 
+    can_MsgTx.id = PID_REPLY;
+    can_MsgTx.len = 8;
+    for (uint8_t i = 0; i < 8; i++) {
+        can_MsgTx.buf[i] = 0x00;
+    }
+
     // Handle Mode 03 - Request trouble codes
     if (ecu.dtc == false) {
         // No DTCs stored - return empty response
@@ -62,8 +68,7 @@ bool handle_mode_03(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
         // DTCs stored - return the trouble codes
         can_MsgTx.buf[0] = 0x06;              // Length: 6 bytes
         can_MsgTx.buf[1] = MODE3_RESPONSE;    // Mode 03 response (0x43)
-        // Per SAE J1979: Bit 7 = MIL status (1=ON), Bits 6-0 = DTC count
-        can_MsgTx.buf[2] = 0x82;              // MIL ON (0x80) + 2 DTCs (0x02) = 0x82
+        can_MsgTx.buf[2] = 0x02;              // 2 confirmed DTCs
 
         // First DTC: P0100 (MAF Circuit Malfunction)
         // 0x0100 = P0100 in OBD-II DTC format
