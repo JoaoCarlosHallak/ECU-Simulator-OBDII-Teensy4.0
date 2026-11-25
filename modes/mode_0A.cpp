@@ -19,16 +19,21 @@ bool handle_mode_0A(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
         can_MsgTx.buf[i] = 0x00;
     }
 
+    static const uint16_t permanent_dtcs[] = {
+        0x0420,  // P0420: Catalyst efficiency below threshold, Bank 1
+        0x0301,  // P0301: Cylinder 1 misfire
+        0x0171   // P0171: System too lean, Bank 1
+    };
+
     can_MsgTx.buf[1] = MODEA_RESPONSE;
-    if (ecu.dtc) {
-        can_MsgTx.buf[0] = 0x05;
-        can_MsgTx.buf[2] = 0x01;
-        can_MsgTx.buf[3] = 0x00;
-        can_MsgTx.buf[4] = 0x02;
-        can_MsgTx.buf[5] = 0x00;
+    if (ecu.permanent_dtc) {
+        can_MsgTx.buf[0] = 1 + sizeof(permanent_dtcs);
+        for (uint8_t i = 0; i < sizeof(permanent_dtcs) / sizeof(permanent_dtcs[0]); i++) {
+            can_MsgTx.buf[2 + i * 2] = permanent_dtcs[i] >> 8;
+            can_MsgTx.buf[3 + i * 2] = permanent_dtcs[i] & 0xFF;
+        }
     } else {
         can_MsgTx.buf[0] = 0x01;
-        can_MsgTx.buf[2] = 0x00;
     }
 
     can1.write(can_MsgTx);

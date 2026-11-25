@@ -22,8 +22,8 @@
  *
  * Mode 04 (0x04) - Clear/Reset Emissions Diagnostic Info
  *   STATUS: IMPLEMENTED
- *   PURPOSE: Clear DTCs, freeze frames, test data, reset monitors, turn off MIL.
- *   NOTE: Comprehensive reset of all emissions diagnostic data.
+ *   PURPOSE: Clear stored/pending DTCs and freeze frames, and turn off MIL.
+ *   NOTE: Permanent DTCs remain until a monitor verifies the repair.
  *
  * Mode 07 (0x07) - Request Pending Emissions DTCs
  *   STATUS: IMPLEMENTED
@@ -213,6 +213,7 @@ struct ecu_t {
         unsigned int maf_airflow;         // Mass Air Flow for fuel calculations
         unsigned int o2_voltage;          // O2 sensor for emissions feedback
         unsigned char dtc;                // Diagnostic trouble code storage
+        bool permanent_dtc;               // Permanent DTCs survive Mode 04 clearing
 };
 
 

@@ -26,7 +26,8 @@ uint8_t ecu_simClass::init(uint32_t baud) {
   can1.distribute();
   can1.mailboxStatus();
 
-  ecu.dtc = 0;  // No emissions DTCs stored
+  ecu.dtc = 0;  // No stored or pending emissions DTCs
+  ecu.permanent_dtc = false;
 
   // Initialize Mode 02 freeze frame storage
   // Required by OBD-II to help diagnose intermittent emissions faults
@@ -58,9 +59,10 @@ void ecu_simClass::update_pots(void)
   {
     if (pushbuttonSW1.fallingEdge()) 
     {
-      if(ecu.dtc == 0)
+      if(ecu.dtc == 0 && !ecu.permanent_dtc)
       {
           ecu.dtc = 1;
+          ecu.permanent_dtc = true;
           digitalWrite(LED_red, HIGH);
 
           // Capture freeze frame data when DTC is triggered
@@ -71,7 +73,7 @@ void ecu_simClass::update_pots(void)
           freeze_frame[0].maf_airflow = ecu.maf_airflow;
           freeze_frame[0].o2_voltage = ecu.o2_voltage;
           freeze_frame[0].data_stored = true;
-          freeze_frame[0].dtc_code = 0x0100;  // P0100
+          freeze_frame[0].dtc_code = 0x0301;  // P0301
 
           freeze_frame[1].coolant_temp = ecu.coolant_temp;
           freeze_frame[1].engine_rpm = ecu.engine_rpm;
@@ -80,11 +82,14 @@ void ecu_simClass::update_pots(void)
           freeze_frame[1].maf_airflow = ecu.maf_airflow;
           freeze_frame[1].o2_voltage = ecu.o2_voltage;
           freeze_frame[1].data_stored = true;
-          freeze_frame[1].dtc_code = 0x0200;  // P0200
+          freeze_frame[1].dtc_code = 0x0171;  // P0171
 
       }else 
       {
           ecu.dtc = 0;
+          ecu.permanent_dtc = false;
+          freeze_frame[0].data_stored = false;
+          freeze_frame[1].data_stored = false;
           digitalWrite(LED_red, LOW);
       }
     }
