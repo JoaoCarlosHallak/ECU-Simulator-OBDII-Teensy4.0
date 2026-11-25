@@ -26,8 +26,10 @@ uint8_t ecu_simClass::init(uint32_t baud) {
   can1.distribute();
   can1.mailboxStatus();
 
-  ecu.dtc = 0;  // No stored or pending emissions DTCs
-  ecu.permanent_dtc = false;
+  // Start with sample faults so the DTC modes have data to report.
+  ecu.dtc = 1;
+  ecu.permanent_dtc = true;
+  digitalWrite(LED_red, HIGH);
 
   // Initialize Mode 02 freeze frame storage
   // Required by OBD-II to help diagnose intermittent emissions faults
