@@ -26,8 +26,8 @@ uint8_t ecu_simClass::init(uint32_t baud) {
   can1.mailboxStatus();
 
   ecu.dtc = 0;
-  ecu.pending_dtc = 0;
-  ecu.permanent_dtc = 0;
+  ecu.pending_dtc = false;
+  ecu.permanent_dtc = true;
   ecu.warmup_cycles = 0;
   ecu.distance_since_clear = 0;
   ecu.distance_with_mil = 0;

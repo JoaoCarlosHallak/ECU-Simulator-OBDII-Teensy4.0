@@ -19,17 +19,21 @@ bool handle_mode_07(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
         can_MsgTx.buf[i] = 0x00;
     }
 
+    static const uint16_t pending_dtcs[] = {
+        0x0133,  // P0133: O2 sensor slow response, Bank 1 Sensor 1
+        0x0442,  // P0442: Small EVAP-system leak
+        0x0113   // P0113: Intake air temperature sensor circuit high
+    };
+
     can_MsgTx.buf[1] = MODE7_RESPONSE;
     if (ecu.pending_dtc) {
-        can_MsgTx.buf[0] = 0x06;
-        can_MsgTx.buf[2] = 0x02;
-        can_MsgTx.buf[3] = 0x01;
-        can_MsgTx.buf[4] = 0x00;
-        can_MsgTx.buf[5] = 0x02;
-        can_MsgTx.buf[6] = 0x00;
+        can_MsgTx.buf[0] = 1 + sizeof(pending_dtcs);
+        for (uint8_t i = 0; i < sizeof(pending_dtcs) / sizeof(pending_dtcs[0]); i++) {
+            can_MsgTx.buf[2 + i * 2] = pending_dtcs[i] >> 8;
+            can_MsgTx.buf[3 + i * 2] = pending_dtcs[i] & 0xFF;
+        }
     } else {
-        can_MsgTx.buf[0] = 0x02;
-        can_MsgTx.buf[2] = 0x00;
+        can_MsgTx.buf[0] = 0x01;
     }
 
     can1.write(can_MsgTx);

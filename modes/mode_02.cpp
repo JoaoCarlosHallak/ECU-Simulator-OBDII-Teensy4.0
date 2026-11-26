@@ -61,7 +61,7 @@ extern freeze_frame_t freeze_frame[2];
  *   0x01 = Freeze frame for second DTC
  *   etc.
  *
- * This implementation supports 2 freeze frames corresponding to 2 DTCs.
+ * This implementation supports 2 freeze frames for the first two confirmed DTCs.
  */
 bool handle_mode_02(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simClass* ecu_sim) {
     // Check if this is a Mode 02 request
@@ -80,7 +80,7 @@ bool handle_mode_02(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
     uint8_t frame_num = (can_MsgRx.buf[0] >= 3) ? can_MsgRx.buf[3] : 0x00;
 
     // Validate frame number and check if freeze frame data exists
-    // Support frame 0 and 1 (we have 2 DTCs with freeze frames)
+    // Support frame 0 and 1 (the first two confirmed DTCs have freeze frames)
     if (frame_num <= 1 && freeze_frame[frame_num].data_stored) {
         // Freeze frame data is available for this frame
         // Use stored freeze frame data, NOT current sensor values

@@ -1,12 +1,13 @@
 /*
  * OBD-II Mode 04 - Clear/Reset Emissions Diagnostic Information
  *
- * This mode clears all emissions-related diagnostic information including:
- * - Diagnostic Trouble Codes (DTCs)
+ * This mode clears emissions-related diagnostic information including:
+ * - Stored and pending Diagnostic Trouble Codes (DTCs)
  * - Freeze Frame data
  * - Malfunction Indicator Lamp (MIL) status
- * - Number of DTCs
  * - Test results for emissions monitoring systems
+ * Permanent DTCs are not cleared; they remain until the relevant monitor
+ * verifies that the fault has been repaired.
  *
  * Important: Clearing DTCs does not fix the underlying problem. If the fault
  * condition still exists, the MIL will re-illuminate and DTCs will be set
@@ -32,11 +33,12 @@ extern freeze_frame_t freeze_frame[2];
  * This is a critical function for emissions compliance and testing.
  *
  * According to OBD-II standards, Mode 04 shall:
- * - Clear all DTCs (stored and pending)
+ * - Clear stored and pending DTCs
  * - Clear freeze frame data
  * - Turn off MIL (Check Engine Light)
- * - Reset number of DTCs to zero
+ * - Reset stored and pending DTC counts
  * - Clear test results for continuous and non-continuous monitors
+ * - Preserve permanent DTCs until a monitor verifies a repair
  */
 bool handle_mode_04(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simClass* ecu_sim) {
     // Check if this is a Mode 04 request
@@ -47,7 +49,10 @@ bool handle_mode_04(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
     // Clear all diagnostic trouble codes
     ecu_sim->set_dtc_state(false);
     ecu_sim->set_pending_dtc_state(false);
-    ecu_sim->set_permanent_dtc_state(false);
+    // Mode 04 clears stored and pending codes, not permanent DTCs.
+    digitalWrite(LED_red, LOW);
+    freeze_frame[0].data_stored = false;
+    freeze_frame[1].data_stored = false;
 
     // Prepare positive response to Mode 04 request
     // Per SAE J1979, the response has no additional data beyond the mode echo
