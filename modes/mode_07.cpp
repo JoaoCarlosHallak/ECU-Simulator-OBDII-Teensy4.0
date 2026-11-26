@@ -20,7 +20,7 @@ bool handle_mode_07(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
     }
 
     can_MsgTx.buf[1] = MODE7_RESPONSE;
-    if (ecu.dtc) {
+    if (ecu.pending_dtc) {
         can_MsgTx.buf[0] = 0x06;
         can_MsgTx.buf[2] = 0x02;
         can_MsgTx.buf[3] = 0x01;

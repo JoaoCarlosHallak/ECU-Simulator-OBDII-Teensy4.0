@@ -45,15 +45,9 @@ bool handle_mode_04(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
     }
 
     // Clear all diagnostic trouble codes
-    ecu.dtc = false;
-
-    // Turn off the Malfunction Indicator Lamp (MIL/Check Engine Light)
-    digitalWrite(LED_red, LOW);
-
-    // Clear freeze frame data for all stored frames
-    // Freeze frames capture the vehicle's operating conditions when a DTC was set
-    freeze_frame[0].data_stored = false;
-    freeze_frame[1].data_stored = false;
+    ecu_sim->set_dtc_state(false);
+    ecu_sim->set_pending_dtc_state(false);
+    ecu_sim->set_permanent_dtc_state(false);
 
     // Prepare positive response to Mode 04 request
     // Per SAE J1979, the response has no additional data beyond the mode echo

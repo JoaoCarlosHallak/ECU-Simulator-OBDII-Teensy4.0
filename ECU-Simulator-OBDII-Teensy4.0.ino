@@ -14,6 +14,7 @@ uint16_t flash_led_tick = 0;
 const int led = 13;   // red LED on Teensy
 
 void setup() {
+  Serial.begin(115200);
   pinMode(led,OUTPUT);
   pinMode(LED_red,OUTPUT);
   pinMode(LED_green,OUTPUT);

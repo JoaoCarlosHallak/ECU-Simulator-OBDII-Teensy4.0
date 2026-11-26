@@ -212,7 +212,12 @@ struct ecu_t {
         unsigned char vehicle_speed;      // Speed for emissions testing modes
         unsigned int maf_airflow;         // Mass Air Flow for fuel calculations
         unsigned int o2_voltage;          // O2 sensor for emissions feedback
-        unsigned char dtc;                // Diagnostic trouble code storage
+        unsigned char dtc;                // Legacy confirmed-DTC/MIL status
+        unsigned char pending_dtc;        // Pending DTC status (Mode 07)
+        unsigned char permanent_dtc;      // Permanent DTC status (Mode 0A)
+        unsigned char warmup_cycles;      // Warm-up cycles since clear
+        unsigned int distance_since_clear;// km since DTC clear
+        unsigned int distance_with_mil;   // km with MIL illuminated
 };
 
 
@@ -260,6 +265,9 @@ class ecu_simClass
   uint8_t init(uint32_t baud);
   uint8_t update(void);
   void update_pots(void);
+  void set_dtc_state(bool active);
+  void set_pending_dtc_state(bool active);
+  void set_permanent_dtc_state(bool active);
   void isotp_init_transfer(uint8_t* data, uint16_t len, uint16_t can_id, uint8_t mode, uint8_t pid);
   void isotp_send_first_frame(void);
   void isotp_handle_flow_control(uint8_t* data);

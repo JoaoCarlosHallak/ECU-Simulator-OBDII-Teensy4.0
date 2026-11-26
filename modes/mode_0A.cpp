@@ -20,7 +20,7 @@ bool handle_mode_0A(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
     }
 
     can_MsgTx.buf[1] = MODEA_RESPONSE;
-    if (ecu.dtc) {
+    if (ecu.permanent_dtc) {
         can_MsgTx.buf[0] = 0x05;
         can_MsgTx.buf[2] = 0x01;
         can_MsgTx.buf[3] = 0x00;

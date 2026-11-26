@@ -394,8 +394,8 @@ bool handle_mode_01(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
             can_MsgTx.id = PID_REPLY_ENGINE;
             can_MsgTx.buf[0] = 0x04;
             can_MsgTx.buf[2] = DISTANCE_WITH_MIL;
-            can_MsgTx.buf[3] = 0x00;  // From Mercedes: 0 km
-            can_MsgTx.buf[4] = 0x00;
+            can_MsgTx.buf[3] = (ecu.distance_with_mil >> 8) & 0xFF;
+            can_MsgTx.buf[4] = ecu.distance_with_mil & 0xFF;
             can1.write(can_MsgTx);
             break;
 
@@ -430,7 +430,7 @@ bool handle_mode_01(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
             can_MsgTx.id = PID_REPLY_ENGINE;
             can_MsgTx.buf[0] = 0x03;
             can_MsgTx.buf[2] = WARM_UPS;
-            can_MsgTx.buf[3] = 0xFF;  // From Mercedes
+            can_MsgTx.buf[3] = ecu.warmup_cycles;
             can1.write(can_MsgTx);
             break;
 
@@ -438,8 +438,8 @@ bool handle_mode_01(CAN_message_t& can_MsgRx, CAN_message_t& can_MsgTx, ecu_simC
             can_MsgTx.id = PID_REPLY_ENGINE;
             can_MsgTx.buf[0] = 0x04;
             can_MsgTx.buf[2] = DISTANCE_SINCE_CLR;
-            can_MsgTx.buf[3] = 0xFF;  // From Mercedes: 65535 km
-            can_MsgTx.buf[4] = 0xFF;
+            can_MsgTx.buf[3] = (ecu.distance_since_clear >> 8) & 0xFF;
+            can_MsgTx.buf[4] = ecu.distance_since_clear & 0xFF;
             can1.write(can_MsgTx);
             break;
 

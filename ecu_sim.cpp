@@ -8,7 +8,6 @@
 #include "mode_includes.h"
 
 Bounce pushbuttonSW1 = Bounce(SW1, 10);
-Bounce pushbuttonSW2 = Bounce(SW2, 10);
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;  // can1 port 
 extern uint16_t flash_led_tick;
@@ -26,12 +25,19 @@ uint8_t ecu_simClass::init(uint32_t baud) {
   can1.distribute();
   can1.mailboxStatus();
 
-  ecu.dtc = 0;  // No emissions DTCs stored
+  ecu.dtc = 0;
+  ecu.pending_dtc = 0;
+  ecu.permanent_dtc = 0;
+  ecu.warmup_cycles = 0;
+  ecu.distance_since_clear = 0;
+  ecu.distance_with_mil = 0;
 
   // Initialize Mode 02 freeze frame storage
   // Required by OBD-II to help diagnose intermittent emissions faults
   freeze_frame[0].data_stored = false;
   freeze_frame[1].data_stored = false;
+  freeze_frame[0].dtc_code = 0;
+  freeze_frame[1].dtc_code = 0;
 
   // Initialize with realistic idle values from real Mercedes-Benz
   // These represent a warmed-up engine meeting emissions standards
@@ -46,48 +52,134 @@ uint8_t ecu_simClass::init(uint32_t baud) {
 }
 void ecu_simClass::update_pots(void) 
 {
-  uint16_t temp;
-  /*ecu.engine_rpm = 0xffff - map(analogRead(AN1), 0, 1023, 0, 0xffff);
-  ecu.vehicle_speed = 0xff - map(analogRead(AN3), 0, 1023, 0, 0xff);
-  ecu.coolant_temp =  0xff - map(analogRead(AN2), 0, 1023, 0, 0xff);
-  ecu.maf_airflow = 0xffff - map(analogRead(AN4), 0, 1023, 0, 0xffff);
-  ecu.throttle_position = 0xff - map(analogRead(AN5), 0, 1023, 0, 0xff);
-  ecu.o2_voltage = 0xffff - map(analogRead(AN6), 0, 1023, 0, 0xffff);*/
- 
   if (pushbuttonSW1.update()) 
   {
     if (pushbuttonSW1.fallingEdge()) 
     {
-      if(ecu.dtc == 0)
-      {
-          ecu.dtc = 1;
-          digitalWrite(LED_red, HIGH);
-
-          // Capture freeze frame data when DTC is triggered
-          freeze_frame[0].coolant_temp = ecu.coolant_temp;
-          freeze_frame[0].engine_rpm = ecu.engine_rpm;
-          freeze_frame[0].throttle_position = ecu.throttle_position;
-          freeze_frame[0].vehicle_speed = ecu.vehicle_speed;
-          freeze_frame[0].maf_airflow = ecu.maf_airflow;
-          freeze_frame[0].o2_voltage = ecu.o2_voltage;
-          freeze_frame[0].data_stored = true;
-          freeze_frame[0].dtc_code = 0x0100;  // P0100
-
-          freeze_frame[1].coolant_temp = ecu.coolant_temp;
-          freeze_frame[1].engine_rpm = ecu.engine_rpm;
-          freeze_frame[1].throttle_position = ecu.throttle_position;
-          freeze_frame[1].vehicle_speed = ecu.vehicle_speed;
-          freeze_frame[1].maf_airflow = ecu.maf_airflow;
-          freeze_frame[1].o2_voltage = ecu.o2_voltage;
-          freeze_frame[1].data_stored = true;
-          freeze_frame[1].dtc_code = 0x0200;  // P0200
-
-      }else 
-      {
-          ecu.dtc = 0;
-          digitalWrite(LED_red, LOW);
-      }
+      set_dtc_state(ecu.dtc == 0);
     }
+  }
+
+  if (Serial.available())
+  {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    command.toUpperCase();
+
+    if (command == "DTC ON")
+    {
+      set_dtc_state(true);
+      Serial.println("DTC set: P0100, P0200");
+    }
+    else if (command == "DTC OFF")
+    {
+      set_dtc_state(false);
+      Serial.println("DTC cleared");
+    }
+    else if (command == "PENDING ON")
+    {
+      set_pending_dtc_state(true);
+      Serial.println("Pending DTC set");
+    }
+    else if (command == "PENDING OFF")
+    {
+      set_pending_dtc_state(false);
+      Serial.println("Pending DTC cleared");
+    }
+    else if (command == "PERMANENT ON")
+    {
+      set_permanent_dtc_state(true);
+      Serial.println("Permanent DTC set");
+    }
+    else if (command == "PERMANENT OFF")
+    {
+      set_permanent_dtc_state(false);
+      Serial.println("Permanent DTC cleared");
+    }
+    else if (command == "STATUS")
+    {
+      Serial.print("Confirmed: "); Serial.print(ecu.dtc ? "ON" : "OFF");
+      Serial.print(" | Pending: "); Serial.print(ecu.pending_dtc ? "ON" : "OFF");
+      Serial.print(" | Permanent: "); Serial.println(ecu.permanent_dtc ? "ON" : "OFF");
+    }
+  }
+}
+
+void ecu_simClass::set_dtc_state(bool active)
+{
+  ecu.dtc = active ? 1 : 0;
+  digitalWrite(LED_red, active ? HIGH : LOW);
+
+  if (!active)
+  {
+    freeze_frame[0].data_stored = false;
+    freeze_frame[1].data_stored = false;
+    freeze_frame[0].dtc_code = 0;
+    freeze_frame[1].dtc_code = 0;
+    ecu.distance_with_mil = 0;
+    ecu.distance_since_clear = 0;
+    ecu.warmup_cycles = 0;
+    return;
+  }
+
+  freeze_frame[0].coolant_temp = ecu.coolant_temp;
+  freeze_frame[0].engine_rpm = ecu.engine_rpm;
+  freeze_frame[0].throttle_position = ecu.throttle_position;
+  freeze_frame[0].vehicle_speed = ecu.vehicle_speed;
+  freeze_frame[0].maf_airflow = ecu.maf_airflow;
+  freeze_frame[0].o2_voltage = ecu.o2_voltage;
+  freeze_frame[0].data_stored = true;
+  freeze_frame[0].dtc_code = 0x0100;  // P0100
+
+  freeze_frame[1].coolant_temp = ecu.coolant_temp;
+  freeze_frame[1].engine_rpm = ecu.engine_rpm;
+  freeze_frame[1].throttle_position = ecu.throttle_position;
+  freeze_frame[1].vehicle_speed = ecu.vehicle_speed;
+  freeze_frame[1].maf_airflow = ecu.maf_airflow;
+  freeze_frame[1].o2_voltage = ecu.o2_voltage;
+  freeze_frame[1].data_stored = true;
+  freeze_frame[1].dtc_code = 0x0200;  // P0200
+}
+
+void ecu_simClass::set_pending_dtc_state(bool active)
+{
+  ecu.pending_dtc = active ? 1 : 0;
+  if (active)
+  {
+    freeze_frame[0].coolant_temp = ecu.coolant_temp;
+    freeze_frame[0].engine_rpm = ecu.engine_rpm;
+    freeze_frame[0].throttle_position = ecu.throttle_position;
+    freeze_frame[0].vehicle_speed = ecu.vehicle_speed;
+    freeze_frame[0].maf_airflow = ecu.maf_airflow;
+    freeze_frame[0].o2_voltage = ecu.o2_voltage;
+    freeze_frame[0].data_stored = true;
+    freeze_frame[0].dtc_code = 0x0100;
+  }
+  else if (!ecu.dtc)
+  {
+    freeze_frame[0].data_stored = false;
+    freeze_frame[0].dtc_code = 0;
+  }
+}
+
+void ecu_simClass::set_permanent_dtc_state(bool active)
+{
+  ecu.permanent_dtc = active ? 1 : 0;
+  if (active)
+  {
+    freeze_frame[1].coolant_temp = ecu.coolant_temp;
+    freeze_frame[1].engine_rpm = ecu.engine_rpm;
+    freeze_frame[1].throttle_position = ecu.throttle_position;
+    freeze_frame[1].vehicle_speed = ecu.vehicle_speed;
+    freeze_frame[1].maf_airflow = ecu.maf_airflow;
+    freeze_frame[1].o2_voltage = ecu.o2_voltage;
+    freeze_frame[1].data_stored = true;
+    freeze_frame[1].dtc_code = 0x0200;
+  }
+  else if (!ecu.dtc)
+  {
+    freeze_frame[1].data_stored = false;
+    freeze_frame[1].dtc_code = 0;
   }
 }
 
